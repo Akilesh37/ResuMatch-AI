@@ -1,0 +1,22 @@
+DR. ELENA ROSTOVA
+Email: elena.rostova.ai@gmail.com | Phone: +1-650-555-0144 | Palo Alto, CA
+
+PROFESSIONAL SUMMARY
+Senior Machine Learning & AI Research Engineer with 5 years of industry experience developing transformer architectures, large language model (LLM) fine-tuning pipelines, and high-throughput vector retrieval systems.
+
+WORK EXPERIENCE
+Lead AI Engineer | DeepIntelligence Labs (2022 - Present)
+- Architected enterprise RAG system with PyTorch, HuggingFace Transformers, and Vector Databases (FAISS/ChromaDB).
+- Deployed real-time inference microservices with FastAPI and Docker on AWS EKS with Kubernetes.
+- Optimized semantic embedding computation, reducing latency by 40%.
+
+Machine Learning Engineer | Apex Data Systems (2019 - 2022)
+- Built NLP classification models, entity extraction pipelines (NER), and sentiment analysis engines.
+- Collaborated in cross-functional agile teams using CI/CD and Git.
+
+TECHNICAL SKILLS
+Python, PyTorch, Transformers, Deep Learning, Machine Learning, LLMs, LangChain, Vector Databases, FastAPI, Docker, Kubernetes, AWS, SQL, Scikit-Learn, Git, NLP.
+
+EDUCATION
+Ph.D. in Computer Science (Artificial Intelligence) | Stanford University (2019)
+B.S. in Computer Science | UC Berkeley (2015)

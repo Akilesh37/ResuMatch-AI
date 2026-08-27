@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI Semantic Resume Screening System with OCR, NLP Skill Taxonomy, and Dense Vector Similarity Ranking">
+    <title>ResuMatch AI — Semantic Resume Screening & Screening System</title>
+    
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i data-lucide="scan-line"></i>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">ResuMatch<span class="brand-gradient">AI</span></span>
+                    <span class="brand-badge">Enterprise 2.0</span>
+                </div>
+            </div>
+
+            <!-- Active Job Selector -->
+            <div class="job-selector-wrapper">
+                <label for="global-job-select" class="field-label">Active Job Requirement</label>
+                <div class="select-wrapper">
+                    <select id="global-job-select" class="custom-select">
+                        <option value="" disabled selected>Loading Job Openings...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="rankings-tab" id="nav-rankings">
+                    <i data-lucide="trophy"></i>
+                    <span>Candidate Leaderboard</span>
+                    <span class="nav-pill" id="nav-count-badge">0</span>
+                </button>
+                <button class="nav-item" data-tab="upload-tab" id="nav-upload">
+                    <i data-lucide="upload-cloud"></i>
+                    <span>Batch Resume Ingestion</span>
+                </button>
+                <button class="nav-item" data-tab="queue-tab" id="nav-queue">
+                    <i data-lucide="activity"></i>
+                    <span>Live Processing Queue</span>
+                    <span class="pulse-indicator" id="queue-live-indicator"></span>
+                </button>
+                <button class="nav-item" data-tab="jobs-tab" id="nav-jobs">
+                    <i data-lucide="briefcase"></i>
+                    <span>Job DB & Criteria</span>
+                </button>
+            </nav>
+
+            <!-- Architecture Diagram Mini-Card -->
+            <div class="system-flow-card">
+                <div class="flow-header">
+                    <i data-lucide="cpu"></i>
+                    <span>Pipeline Architecture</span>
+                </div>
+                <div class="flow-steps">
+                    <div class="step-dot" title="Job DB & Resume Queue">Queue</div>
+                    <div class="step-line"></div>
+                    <div class="step-dot" title="Text Extraction & Tesseract OCR">OCR</div>
+                    <div class="step-line"></div>
+                    <div class="step-dot" title="NLP Taxonomy">NLP</div>
+                    <div class="step-line"></div>
+                    <div class="step-dot" title="Transformer Embeddings">Embed</div>
+                    <div class="step-line"></div>
+                    <div class="step-dot active" title="Similarity Engine & Ranking DB">Rank</div>
+                </div>
+            </div>
+
+            <!-- Footer Meta -->
+            <div class="sidebar-footer">
+                <div class="system-status">
+                    <span class="status-dot online"></span>
+                    <span>Worker Engine Online</span>
+                </div>
+                <div class="system-version">v2.0 • Transformer & OCR Active</div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <!-- Top Header Bar -->
+            <header class="top-header">
+                <div class="header-left">
+                    <h1 class="page-title" id="current-page-title">Candidate Leaderboard</h1>
+                    <p class="page-subtitle" id="current-job-subtitle">Select or configure a job requirement to screen candidate resumes.</p>
+                </div>
+                <div class="header-right">
+                    <div class="quick-stats">
+                        <div class="stat-pill" title="Total Screened Resumes">
+                            <i data-lucide="users"></i>
+                            <span id="stat-total-candidates">0 Candidates</span>
+                        </div>
+                        <div class="stat-pill success" title="Shortlisted Candidates">
+                            <i data-lucide="check-circle-2"></i>
+                            <span id="stat-shortlisted">0 Shortlisted</span>
+                        </div>
+                        <div class="stat-pill ocr-stat" title="OCR Processed Documents">
+                            <i data-lucide="file-scan"></i>
+                            <span id="stat-ocr-count">OCR Ready</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="btn-quick-upload">
+                        <i data-lucide="plus"></i>
+                        <span>Upload Resumes</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Tab 1: Candidate Leaderboard & Rankings -->
+            <section class="tab-content active" id="rankings-tab">
+                <div class="card toolbar-card">
+                    <div class="search-box">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="candidate-search-input" placeholder="Search candidates by name, skill, or email...">
+                    </div>
+                    <div class="filters-row">
+                        <div class="filter-group">
+                            <label>Status:</label>
+                            <select id="filter-status" class="filter-select">
+                                <option value="">All Statuses</option>
+                                <option value="SHORTLISTED">⭐ Shortlisted</option>
+                                <option value="ELIGIBLE">✅ Eligible</option>
+                                <option value="UNDER_REVIEW">⏳ Under Review</option>
+                                <option value="REJECTED">❌ Rejected</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Min Score:</label>
+                            <select id="filter-min-score" class="filter-select">
+                                <option value="0">All Scores (0%+)</option>
+                                <option value="50">50% & Above</option>
+                                <option value="70">70% & Above</option>
+                                <option value="85">85% Top Tier</option>
+                            </select>
+                        </div>
+                        <div class="filter-actions">
+                            <button class="btn btn-secondary" id="btn-export-csv" title="Export Leaderboard to CSV">
+                                <i data-lucide="download"></i>
+                                <span>Export CSV</span>
+                            </button>
+                            <button class="btn btn-secondary" id="btn-refresh-rankings" title="Refresh Evaluation Data">
+                                <i data-lucide="rotate-cw"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Job Requirements Summary Strip -->
+                <div class="job-summary-strip" id="active-job-strip">
+                    <!-- Injected dynamically -->
+                </div>
+
+                <!-- Leaderboard Table / Grid -->
+                <div class="leaderboard-container">
+                    <div class="table-responsive">
+                        <table class="leaderboard-table" id="rankings-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-rank">Rank</th>
+                                    <th class="col-candidate">Candidate Profile</th>
+                                    <th class="col-score">Match Score</th>
+                                    <th class="col-breakdown">Score Vector Breakdown</th>
+                                    <th class="col-skills">Key Matched Skills</th>
+                                    <th class="col-status">Status</th>
+                                    <th class="col-actions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rankings-table-body">
+                                <tr>
+                                    <td colspan="7" class="empty-state-cell">
+                                        <div class="empty-state">
+                                            <i data-lucide="file-search"></i>
+                                            <h3>No Evaluated Resumes Yet</h3>
+                                            <p>Upload candidate resumes to start the automated screening and ranking pipeline.</p>
+                                            <button class="btn btn-primary" onclick="app.switchTab('upload-tab')">Upload Resumes Now</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 2: Batch Resume Ingestion -->
+            <section class="tab-content" id="upload-tab">
+                <div class="upload-grid">
+                    <!-- Dropzone -->
+                    <div class="card upload-card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">Batch Resume Ingestion</h2>
+                                <p class="card-subtitle">Supported formats: PDF, DOCX, TXT, PNG, JPG, JPEG (Native Text & OCR Scanned)</p>
+                            </div>
+                            <div class="ocr-support-badge">
+                                <i data-lucide="sparkles"></i>
+                                <span>OCR Fallback Active</span>
+                            </div>
+                        </div>
+
+                        <div class="dropzone" id="resume-dropzone">
+                            <input type="file" id="file-input" multiple accept=".pdf,.docx,.doc,.txt,.rtf,.png,.jpg,.jpeg,.tiff,.bmp,.webp" hidden>
+                            <div class="dropzone-inner">
+                                <div class="dropzone-icon">
+                                    <i data-lucide="file-up"></i>
+                                </div>
+                                <h3>Drag & Drop Resumes Here</h3>
+                                <p>or <button type="button" class="btn-link" id="btn-browse-files">browse files from computer</button></p>
+                                <span class="dropzone-hint">Upload multiple resumes at once to screen in batch</span>
+                            </div>
+                        </div>
+
+                        <!-- Selected Files Preview List -->
+                        <div class="staged-files-wrapper" id="staged-files-container" style="display: none;">
+                            <div class="staged-header">
+                                <h4>Staged Files for Processing (<span id="staged-count">0</span>)</h4>
+                                <button class="btn-link text-danger" id="btn-clear-staged">Clear All</button>
+                            </div>
+                            <ul class="staged-list" id="staged-list"></ul>
+                            <div class="upload-submit-bar">
+                                <button class="btn btn-primary btn-lg" id="btn-submit-upload">
+                                    <i data-lucide="play"></i>
+                                    <span>Enqueue & Start Processing Pipeline</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pipeline Features Info Card -->
+                    <div class="card info-card">
+                        <h3 class="card-title"><i data-lucide="layers"></i> Automated Processing Pipeline</h3>
+                        <div class="pipeline-feature-list">
+                            <div class="pipeline-feature-item">
+                                <div class="feature-icon"><i data-lucide="file-text"></i></div>
+                                <div>
+                                    <h4>1. Multi-Format Text Extraction</h4>
+                                    <p>Extracts structured content from PDF, DOCX, and plaintext documents.</p>
+                                </div>
+                            </div>
+                            <div class="pipeline-feature-item">
+                                <div class="feature-icon"><i data-lucide="scan"></i></div>
+                                <div>
+                                    <h4>2. Optical Character Recognition (OCR)</h4>
+                                    <p>Tesseract OCR engine automatically analyzes scanned PDFs and image-based resumes with image enhancement.</p>
+                                </div>
+                            </div>
+                            <div class="pipeline-feature-item">
+                                <div class="feature-icon"><i data-lucide="brain"></i></div>
+                                <div>
+                                    <h4>3. NLP & 1,000+ Skill Taxonomy</h4>
+                                    <p>Detects technical skills, certifications, experience durations, and education degrees.</p>
+                                </div>
+                            </div>
+                            <div class="pipeline-feature-item">
+                                <div class="feature-icon"><i data-lucide="network"></i></div>
+                                <div>
+                                    <h4>4. Transformer Vector Embeddings</h4>
+                                    <p>Generates high-dimensional semantic representations via MiniLM-L6-v2 transformer model.</p>
+                                </div>
+                            </div>
+                            <div class="pipeline-feature-item">
+                                <div class="feature-icon"><i data-lucide="scale"></i></div>
+                                <div>
+                                    <h4>5. Hybrid Multi-Factor Similarity Engine</h4>
+                                    <p>Calculates weighted match score combining semantic cosine similarity, skill coverage, and experience alignment.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sample Resumes Quick Test Bar -->
+                        <div class="sample-resumes-box">
+                            <h4><i data-lucide="test-tube-2"></i> Instant Test with Samples</h4>
+                            <p>Don't have files on hand? Click below to load realistic sample candidates:</p>
+                            <div class="sample-buttons">
+                                <button class="btn btn-outline btn-sm" id="btn-load-sample-ai">🤖 AI/ML Engineer Sample</button>
+                                <button class="btn btn-outline btn-sm" id="btn-load-sample-fullstack">💻 Full-Stack Dev Sample</button>
+                                <button class="btn btn-outline btn-sm" id="btn-load-sample-ocr">📷 Scanned Image (OCR) Sample</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 3: Live Processing Queue -->
+            <section class="tab-content" id="queue-tab">
+                <div class="queue-overview-grid">
+                    <div class="card stat-widget">
+                        <span class="widget-label">Total Ingested</span>
+                        <h2 class="widget-val" id="queue-stat-total">0</h2>
+                        <i data-lucide="files" class="widget-icon"></i>
+                    </div>
+                    <div class="card stat-widget">
+                        <span class="widget-label">Queued</span>
+                        <h2 class="widget-val text-warning" id="queue-stat-queued">0</h2>
+                        <i data-lucide="clock" class="widget-icon"></i>
+                    </div>
+                    <div class="card stat-widget">
+                        <span class="widget-label">Processing Now</span>
+                        <h2 class="widget-val text-primary" id="queue-stat-processing">0</h2>
+                        <i data-lucide="loader-2" class="widget-icon spin"></i>
+                    </div>
+                    <div class="card stat-widget">
+                        <span class="widget-label">Completed</span>
+                        <h2 class="widget-val text-success" id="queue-stat-completed">0</h2>
+                        <i data-lucide="check-circle" class="widget-icon"></i>
+                    </div>
+                </div>
+
+                <div class="card queue-list-card">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">Live Resume Queue & Worker Tasks</h3>
+                            <p class="card-subtitle">Real-time status updates broadcasted via Server-Sent Events (SSE)</p>
+                        </div>
+                        <div class="live-stream-badge">
+                            <span class="pulse-dot"></span>
+                            <span>SSE Stream Active</span>
+                        </div>
+                    </div>
+
+                    <div class="tasks-container" id="tasks-list-container">
+                        <div class="empty-state">
+                            <i data-lucide="inbox"></i>
+                            <h3>Resume Queue is Empty</h3>
+                            <p>All tasks have finished processing or no resumes are currently in the queue.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 4: Job DB & Requirements Configuration -->
+            <section class="tab-content" id="jobs-tab">
+                <div class="jobs-layout-grid">
+                    <!-- Left: Create / Edit Job Form -->
+                    <div class="card job-form-card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">Job Requirements & Screening Criteria</h2>
+                                <p class="card-subtitle">Define required competencies, minimum experience, and custom scoring weights.</p>
+                            </div>
+                            <div class="template-selector-box">
+                                <label for="template-select">Load Template:</label>
+                                <select id="template-select" class="custom-select-sm">
+                                    <option value="" disabled selected>Choose a template...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <form id="job-form" class="job-form">
+                            <div class="form-row">
+                                <div class="form-group flex-2">
+                                    <label for="job-title-input" class="form-label">Job Title <span class="required">*</span></label>
+                                    <input type="text" id="job-title-input" class="form-control" placeholder="e.g. Senior Machine Learning Engineer" required>
+                                </div>
+                                <div class="form-group flex-1">
+                                    <label for="job-dept-input" class="form-label">Department</label>
+                                    <input type="text" id="job-dept-input" class="form-control" placeholder="e.g. AI & Engineering" value="Engineering">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="job-desc-input" class="form-label">Job Description & Responsibilities <span class="required">*</span></label>
+                                <textarea id="job-desc-input" class="form-control" rows="4" placeholder="Describe the role, responsibilities, technical domain..." required></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="job-req-skills-input" class="form-label">Required Skills (Comma separated) <span class="required">*</span></label>
+                                <input type="text" id="job-req-skills-input" class="form-control" placeholder="e.g. Python, PyTorch, Transformers, FastAPI, Docker" required>
+                                <span class="form-hint">These skills are critical and heavily weighted in candidate scoring.</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="job-pref-skills-input" class="form-label">Preferred / Nice-to-Have Skills (Comma separated)</label>
+                                <input type="text" id="job-pref-skills-input" class="form-control" placeholder="e.g. Kubernetes, LangChain, AWS, Vector DB">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group flex-1">
+                                    <label for="job-exp-input" class="form-label">Min Experience (Years)</label>
+                                    <input type="number" id="job-exp-input" class="form-control" min="0" max="30" step="0.5" value="2.0">
+                                </div>
+                                <div class="form-group flex-1">
+                                    <label for="job-threshold-input" class="form-label">Shortlisting Threshold Score (%)</label>
+                                    <input type="number" id="job-threshold-input" class="form-control" min="0" max="100" value="60">
+                                </div>
+                            </div>
+
+                            <!-- Custom Weights Sliders -->
+                            <div class="weights-config-box">
+                                <div class="weights-header">
+                                    <label class="form-label"><i data-lucide="sliders"></i> Custom Scoring Algorithm Weights</label>
+                                    <span class="weights-sum-badge" id="weights-sum-badge">Total: 100%</span>
+                                </div>
+                                <div class="slider-row">
+                                    <div class="slider-item">
+                                        <div class="slider-labels">
+                                            <span>Semantic Similarity</span>
+                                            <span id="label-weight-semantic">40%</span>
+                                        </div>
+                                        <input type="range" id="slider-weight-semantic" min="0" max="100" value="40" class="custom-slider">
+                                    </div>
+                                    <div class="slider-item">
+                                        <div class="slider-labels">
+                                            <span>Skill Alignment</span>
+                                            <span id="label-weight-skills">35%</span>
+                                        </div>
+                                        <input type="range" id="slider-weight-skills" min="0" max="100" value="35" class="custom-slider">
+                                    </div>
+                                    <div class="slider-item">
+                                        <div class="slider-labels">
+                                            <span>Experience Match</span>
+                                            <span id="label-weight-experience">15%</span>
+                                        </div>
+                                        <input type="range" id="slider-weight-experience" min="0" max="100" value="15" class="custom-slider">
+                                    </div>
+                                    <div class="slider-item">
+                                        <div class="slider-labels">
+                                            <span>Keyword Relevance</span>
+                                            <span id="label-weight-keywords">10%</span>
+                                        </div>
+                                        <input type="range" id="slider-weight-keywords" min="0" max="100" value="10" class="custom-slider">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary btn-lg" id="btn-save-job">
+                                    <i data-lucide="save"></i>
+                                    <span>Save & Activate Job Opening</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Right: Existing Job List in Job DB -->
+                    <div class="card job-list-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Configured Job Openings (Job DB)</h3>
+                        </div>
+                        <div class="saved-jobs-list" id="saved-jobs-list">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Candidate Detail & OCR Inspector Modal -->
+    <div class="modal-backdrop" id="candidate-modal-backdrop" style="display: none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <h2 id="modal-candidate-name">Candidate Profile</h2>
+                    <div class="modal-badges" id="modal-candidate-badges"></div>
+                </div>
+                <button class="btn-icon" id="btn-close-modal">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Top Summary Cards Grid -->
+                <div class="modal-metrics-grid">
+                    <div class="metric-card score-overall-card">
+                        <span class="metric-label">Composite Match</span>
+                        <h2 class="metric-val" id="modal-score-overall">0%</h2>
+                        <span class="metric-sub" id="modal-score-status">Pending</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Semantic Similarity</span>
+                        <h3 class="metric-val text-primary" id="modal-score-semantic">0%</h3>
+                        <span class="metric-sub">Transformer Cosine</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Skill Coverage</span>
+                        <h3 class="metric-val text-info" id="modal-score-skills">0%</h3>
+                        <span class="metric-sub" id="modal-skills-count">0 Matched</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Experience Match</span>
+                        <h3 class="metric-val text-warning" id="modal-score-exp">0%</h3>
+                        <span class="metric-sub" id="modal-candidate-years">0 Years</span>
+                    </div>
+                </div>
+
+                <!-- Tabs inside Modal: Breakdown / Skills / Extracted Text & OCR -->
+                <div class="modal-tabs">
+                    <button class="modal-tab-btn active" data-modal-tab="tab-overview">Match Breakdown & AI Insights</button>
+                    <button class="modal-tab-btn" data-modal-tab="tab-skills">Skills & Credentials</button>
+                    <button class="modal-tab-btn" data-modal-tab="tab-raw-text">Extracted Text & OCR Inspector</button>
+                </div>
+
+                <!-- Modal Tab 1: Overview & AI Analysis -->
+                <div class="modal-tab-pane active" id="tab-overview">
+                    <div class="ai-analysis-box">
+                        <h4><i data-lucide="sparkles"></i> AI Screening Assessment</h4>
+                        <p id="modal-ai-summary">Loading assessment...</p>
+                        
+                        <div class="strengths-gaps-grid">
+                            <div class="analysis-col strengths">
+                                <h5><i data-lucide="check-circle-2"></i> Key Strengths</h5>
+                                <ul id="modal-strengths-list"></ul>
+                            </div>
+                            <div class="analysis-col gaps">
+                                <h5><i data-lucide="alert-circle"></i> Potential Gaps</h5>
+                                <ul id="modal-gaps-list"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact & Document Meta -->
+                    <div class="candidate-meta-card">
+                        <div class="meta-item"><i data-lucide="mail"></i> <span id="modal-candidate-email">N/A</span></div>
+                        <div class="meta-item"><i data-lucide="phone"></i> <span id="modal-candidate-phone">N/A</span></div>
+                        <div class="meta-item"><i data-lucide="file"></i> <span id="modal-candidate-file">N/A</span></div>
+                        <div class="meta-item"><i data-lucide="scan"></i> <span id="modal-candidate-ocr-status">N/A</span></div>
+                    </div>
+                </div>
+
+                <!-- Modal Tab 2: Skills & Credentials -->
+                <div class="modal-tab-pane" id="tab-skills">
+                    <div class="skills-section">
+                        <h4>Matched Required & Preferred Skills</h4>
+                        <div class="chips-container" id="modal-matched-chips"></div>
+                    </div>
+                    <div class="skills-section">
+                        <h4>Missing Required Skills</h4>
+                        <div class="chips-container" id="modal-missing-chips"></div>
+                    </div>
+                    <div class="skills-section">
+                        <h4>Additional Extracted Skills</h4>
+                        <div class="chips-container" id="modal-extra-chips"></div>
+                    </div>
+                </div>
+
+                <!-- Modal Tab 3: Extracted Text & OCR Inspector -->
+                <div class="modal-tab-pane" id="tab-raw-text">
+                    <div class="ocr-inspector-toolbar">
+                        <div class="ocr-status-tag" id="modal-ocr-tag">
+                            <i data-lucide="check"></i> <span>Native Text Extraction</span>
+                        </div>
+                        <button class="btn btn-sm btn-secondary" id="btn-copy-raw-text">
+                            <i data-lucide="copy"></i> Copy Text
+                        </button>
+                    </div>
+                    <div class="raw-text-viewer">
+                        <pre id="modal-raw-text-content">Loading text...</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer: Recruiter Decision Actions -->
+            <div class="modal-footer">
+                <div class="decision-group">
+                    <span class="decision-label">Recruiter Decision:</span>
+                    <button class="btn btn-outline-success" id="btn-action-shortlist">
+                        <i data-lucide="check"></i> Shortlist
+                    </button>
+                    <button class="btn btn-outline-warning" id="btn-action-review">
+                        <i data-lucide="clock"></i> Mark Under Review
+                    </button>
+                    <button class="btn btn-outline-danger" id="btn-action-reject">
+                        <i data-lucide="x"></i> Reject
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- JavaScript Files -->
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/components/jobManager.js"></script>
+    <script src="/static/js/components/uploader.js"></script>
+    <script src="/static/js/components/queueMonitor.js"></script>
+    <script src="/static/js/components/rankingBoard.js"></script>
+    <script src="/static/js/components/candidateModal.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

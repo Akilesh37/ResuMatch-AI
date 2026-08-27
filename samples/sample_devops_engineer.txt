@@ -1,0 +1,20 @@
+SARAH JENNINGS
+Email: sarah.jennings.devops@cloudmesh.io | Phone: +1-512-555-3389 | Austin, TX
+
+SUMMARY
+DevOps & Cloud Infrastructure Engineer with 3.5 years of experience automating CI/CD pipelines, Kubernetes orchestrations, and Terraform infrastructure-as-code across AWS and GCP.
+
+PROFESSIONAL EXPERIENCE
+DevOps Engineer | CloudScale Systems (2021 - Present)
+- Provisioned infrastructure using Terraform and Ansible on AWS (EC2, S3, RDS, EKS).
+- Configured Kubernetes clusters, Helm charts, and Docker containerization.
+- Automated CI/CD pipelines using GitHub Actions, ensuring zero-downtime deployments.
+
+Systems Administrator | NetCore Solutions (2019 - 2021)
+- Managed Linux server administration (Ubuntu, RedHat), Bash automation scripting, and Nginx reverse proxies.
+
+SKILLS
+Docker, Kubernetes, AWS, Terraform, CI/CD, Linux, Bash, Git, Ansible, GCP, Python, Nginx, Security.
+
+EDUCATION
+B.S. in Information Technology | University of Texas at Austin (2019)
